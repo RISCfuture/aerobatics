@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch: {}
+  schedule:
+    # Daily at 15:00 UTC. NASR cycles turn over every 28 days on a
+    # Thursday; a daily poll catches new cycles within a day of effective
+    # date, and the job exits early when the current cycle is already
+    # released.
+    - cron: "0 15 * * *"
 
 permissions:
   contents: write   # create / update releases
@@ -26,21 +32,39 @@ jobs:
 
       - name: Resolve NASR / AIRAC cycle
         id: cycle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
         run: |
+          set -euo pipefail
           cycle=$(python generate_aerobatic_kml.py --print-cycle)
           echo "date=$cycle" >> "$GITHUB_OUTPUT"
           echo "NASR/AIRAC cycle: $cycle"
 
+          # Scheduled poll: if this cycle already has a release, skip the
+          # build. Push and workflow_dispatch always rebuild (useful for
+          # re-releasing the same cycle with code changes).
+          if [ "$EVENT" = "schedule" ] && gh release view "$cycle" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $cycle already exists; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache NASR + Census downloads
+        if: steps.cycle.outputs.skip != 'true'
         uses: actions/cache@v4
         with:
           path: data_cache
           key: data-${{ steps.cycle.outputs.date }}
 
       - name: Build ForeFlight content pack
+        if: steps.cycle.outputs.skip != 'true'
         run: python generate_aerobatic_kml.py -v
 
       - name: Publish release
+        if: steps.cycle.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.cycle.outputs.date }}
@@ -61,8 +85,11 @@ jobs:
             gh release delete "$TAG" --repo "$REPO" --cleanup-tag --yes
           fi
 
-          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
-          IMPORT_URL="https://foreflight.com/content?downloadURL=$(printf %s "$DOWNLOAD_URL" | jq -sRr @uri)"
+          # Use /releases/latest/download/ for both links: it auto-redirects
+          # to the newest release, so a user's bookmarked install link keeps
+          # pulling the current cycle as new releases are published.
+          LATEST_URL="https://github.com/${REPO}/releases/latest/download/${ASSET}"
+          IMPORT_URL="https://foreflight.com/content?downloadURL=$(printf %s "$LATEST_URL" | jq -sRr @uri)"
 
           EXPIRES=$(python -c "import datetime as d, os; print((d.datetime.strptime(os.environ['TAG'],'%Y-%m-%d')+d.timedelta(days=28)).strftime('%Y-%m-%d'))")
 
@@ -77,9 +104,11 @@ jobs:
             echo
             echo "Long-press and choose \"Open in ForeFlight\", or tap and pull down to reveal the ForeFlight banner. The download lands under **More → Downloads**, and the layer appears under **Maps → Layers**."
             echo
+            echo "The link above uses GitHub's \`/releases/latest/\` redirect, so the same URL keeps pulling the current NASR cycle as new releases are published — bookmark it once and re-tap when ForeFlight flags the pack as expired."
+            echo
             echo "## Direct download"
             echo
-            echo "${DOWNLOAD_URL}"
+            echo "${LATEST_URL}"
           } > release-notes.md
 
           gh release create "$TAG" \
@@ -87,3 +116,22 @@ jobs:
             --title "91.303 Aerobatic Areas - NASR ${TAG}" \
             --notes-file release-notes.md \
             "$ASSET"
+
+      - name: Prune old releases
+        if: steps.cycle.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP: "6"
+        run: |
+          set -euo pipefail
+          # Keep the latest $KEEP releases (~6 cycles ≈ half a year of
+          # history for rollback) and delete everything older, along with
+          # each release's tag.
+          gh release list --repo "$REPO" --limit 200 --json tagName,createdAt \
+            --jq "sort_by(.createdAt) | reverse | .[${KEEP}:] | .[].tagName" \
+            | while read -r old_tag; do
+                [ -z "$old_tag" ] && continue
+                echo "Pruning old release $old_tag"
+                gh release delete "$old_tag" --repo "$REPO" --cleanup-tag --yes
+              done

@@ -8,18 +8,22 @@ regions are (laterally) available for Part-91 aerobatic practice.
 
 ## Install into ForeFlight
 
-Each NASR/AIRAC cycle produces a tagged release on this repo. On the iOS
-device that has ForeFlight installed:
+On the iOS device that has ForeFlight installed, open this link in
+Safari:
 
-1. Open the [latest release][latest] in Safari.
-2. Tap the **Install in ForeFlight** link.
-3. When the preview appears, long-press or pull the page down and tap
-   **Open in ForeFlight**.
+**[Install in ForeFlight][install]**
 
-The pack downloads into **More → Downloads** and the shaded layer turns on
-under **Maps → Layers**.
+When the preview appears, long-press or pull the page down and tap
+**Open in ForeFlight**. The pack downloads into **More → Downloads** and
+the shaded layer turns on under **Maps → Layers**.
 
-[latest]: ../../releases/latest
+The link goes through GitHub's `releases/latest` redirect, so bookmarking
+it once keeps pulling the current NASR cycle — when ForeFlight flags the
+pack as expired (every 28 days), just tap it again. A daily CI job polls
+the FAA and publishes a new release within a day of each cycle effective
+date.
+
+[install]: https://foreflight.com/content?downloadURL=https%3A%2F%2Fgithub.com%2FRISCfuture%2Faerobatics%2Freleases%2Flatest%2Fdownload%2F91.303.Aerobatic.Areas.zip
 
 ## What the layer shows
 
