@@ -45,9 +45,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.cycle.outputs.date }}
           REPO: ${{ github.repository }}
-          ASSET: "91.303 Aerobatic Areas.zip"
+          BUILT_ASSET: "91.303 Aerobatic Areas.zip"
+          ASSET: "91.303.Aerobatic.Areas.zip"
         run: |
           set -euo pipefail
+
+          # GitHub release-asset upload rewrites spaces to dots. Rename up
+          # front so the filename we announce in the release notes matches
+          # the filename GitHub actually serves.
+          mv -- "$BUILT_ASSET" "$ASSET"
 
           # Overwrite any existing release for this cycle.
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
@@ -55,10 +61,7 @@ jobs:
             gh release delete "$TAG" --repo "$REPO" --cleanup-tag --yes
           fi
 
-          # URL-encode the asset filename for the release asset URL, and
-          # URL-encode that full URL for the ForeFlight import link.
-          ENCODED_ASSET=$(printf %s "$ASSET" | jq -sRr @uri)
-          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ENCODED_ASSET}"
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
           IMPORT_URL="https://foreflight.com/content?downloadURL=$(printf %s "$DOWNLOAD_URL" | jq -sRr @uri)"
 
           EXPIRES=$(python -c "import datetime as d, os; print((d.datetime.strptime(os.environ['TAG'],'%Y-%m-%d')+d.timedelta(days=28)).strftime('%Y-%m-%d'))")
