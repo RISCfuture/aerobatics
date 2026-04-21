@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.python-version
+
+# Downloaded NASR / Census data - regenerable from the FAA and Census
+data_cache/
+
+# Generated artifacts
+91.303 Aerobatic Areas.zip
+*.kml

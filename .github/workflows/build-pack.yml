@@ -1,0 +1,86 @@
+name: Build content pack
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # create / update releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Resolve NASR / AIRAC cycle
+        id: cycle
+        run: |
+          cycle=$(python generate_aerobatic_kml.py --print-cycle)
+          echo "date=$cycle" >> "$GITHUB_OUTPUT"
+          echo "NASR/AIRAC cycle: $cycle"
+
+      - name: Cache NASR + Census downloads
+        uses: actions/cache@v4
+        with:
+          path: data_cache
+          key: data-${{ steps.cycle.outputs.date }}
+
+      - name: Build ForeFlight content pack
+        run: python generate_aerobatic_kml.py -v
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.cycle.outputs.date }}
+          REPO: ${{ github.repository }}
+          ASSET: "91.303 Aerobatic Areas.zip"
+        run: |
+          set -euo pipefail
+
+          # Overwrite any existing release for this cycle.
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Deleting existing release $TAG"
+            gh release delete "$TAG" --repo "$REPO" --cleanup-tag --yes
+          fi
+
+          # URL-encode the asset filename for the release asset URL, and
+          # URL-encode that full URL for the ForeFlight import link.
+          ENCODED_ASSET=$(printf %s "$ASSET" | jq -sRr @uri)
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ENCODED_ASSET}"
+          IMPORT_URL="https://foreflight.com/content?downloadURL=$(printf %s "$DOWNLOAD_URL" | jq -sRr @uri)"
+
+          EXPIRES=$(python -c "import datetime as d, os; print((d.datetime.strptime(os.environ['TAG'],'%Y-%m-%d')+d.timedelta(days=28)).strftime('%Y-%m-%d'))")
+
+          {
+            echo "NASR / AIRAC cycle effective **${TAG}**, nominally valid through **${EXPIRES}**."
+            echo
+            echo "## Import into ForeFlight"
+            echo
+            echo "On an iOS device that has ForeFlight installed, open this link:"
+            echo
+            echo "[Install in ForeFlight](${IMPORT_URL})"
+            echo
+            echo "Long-press and choose \"Open in ForeFlight\", or tap and pull down to reveal the ForeFlight banner. The download lands under **More → Downloads**, and the layer appears under **Maps → Layers**."
+            echo
+            echo "## Direct download"
+            echo
+            echo "${DOWNLOAD_URL}"
+          } > release-notes.md
+
+          gh release create "$TAG" \
+            --repo "$REPO" \
+            --title "91.303 Aerobatic Areas - NASR ${TAG}" \
+            --notes-file release-notes.md \
+            "$ASSET"
