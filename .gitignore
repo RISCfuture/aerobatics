@@ -1,5 +1,17 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+venv/
+.env
 .python-version
 
 # Downloaded NASR / Census data - regenerable from the FAA and Census
