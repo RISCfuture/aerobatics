@@ -8,9 +8,8 @@ import zipfile
 from pathlib import Path
 
 import geopandas as gpd
-import requests
 
-from .config import HEADERS
+from . import http
 
 LOG = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def download(url: str, cache_dir: Path) -> Path:
     if out.exists() and out.stat().st_size > 0:
         return out
     LOG.info("downloading %s", url)
-    with requests.get(url, stream=True, timeout=600, headers=HEADERS) as r:
+    with http.get(url, stream=True) as r:
         r.raise_for_status()
         tmp = out.with_suffix(out.suffix + ".part")
         with open(tmp, "wb") as f:

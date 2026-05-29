@@ -10,9 +10,8 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
-import requests
 
-from .config import HEADERS
+from . import http
 
 LOG = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ def discover_nasr_cycle(landing_url: str) -> tuple[str, str]:
       effective_date: "YYYY-MM-DD"
       cycle_dir_url:  base URL of the per-cycle directory on nfdc.faa.gov
     """
-    r = requests.get(landing_url, timeout=60, headers=HEADERS)
+    r = http.get(landing_url)
     r.raise_for_status()
     # e.g. "./../NASR_Subscription/2026-04-16"
     dates = sorted(set(re.findall(
@@ -36,7 +35,7 @@ def discover_nasr_cycle(landing_url: str) -> tuple[str, str]:
     # Pick the newest date whose detail page actually lists downloads.
     for date in reversed(dates):
         detail_url = landing_url.rstrip("/") + f"/{date}"
-        r2 = requests.get(detail_url, timeout=60, headers=HEADERS)
+        r2 = http.get(detail_url)
         if r2.status_code != 200:
             continue
         if "class_airspace_shape_files.zip" not in r2.text:
