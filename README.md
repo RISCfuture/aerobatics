@@ -66,7 +66,7 @@ conducting aerobatic flight.
 ## Build locally
 
 ```
-pyenv virtualenv 3.11.14 aerobatics
+pyenv virtualenv 3.14.5 aerobatics
 pyenv activate aerobatics
 pip install -r requirements.txt
 python generate_aerobatic_kml.py -v
