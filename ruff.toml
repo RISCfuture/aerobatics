@@ -1,0 +1,7 @@
+target-version = "py313"
+line-length = 88
+
+[lint]
+# Ruff's defaults (pyflakes F + pycodestyle E subset) plus import-sorting (I)
+# and pyupgrade (UP).
+extend-select = ["I", "UP"]

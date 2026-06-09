@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import dataclasses
 
-
 # --- Units / CRS --------------------------------------------------------------
 
 NM_TO_METERS = 1852.0
@@ -36,18 +35,22 @@ class Region:
 
 
 REGIONS: tuple[Region, ...] = (
-    Region("conus", "Contiguous 48 States",
-           "EPSG:5070",  (-130.0,  22.0,  -64.0, 50.0)),
-    Region("ak",    "Alaska",
-           "EPSG:3338",  (-180.0,  50.0, -129.0, 72.0)),
-    Region("hi",    "Hawaii",
-           "EPSG:32604", (-162.0,  18.0, -154.0, 23.0)),
-    Region("pr_vi", "Puerto Rico and U.S. Virgin Islands",
-           "EPSG:32161", ( -68.0,  17.0,  -64.0, 19.0)),
-    Region("samoa", "American Samoa",
-           "EPSG:32702", (-173.0, -15.0, -168.0, -13.0)),
-    Region("guam_cnmi", "Guam and Northern Mariana Islands",
-           "EPSG:32655", ( 144.0,  13.0,  146.5, 21.0)),
+    Region("conus", "Contiguous 48 States", "EPSG:5070", (-130.0, 22.0, -64.0, 50.0)),
+    Region("ak", "Alaska", "EPSG:3338", (-180.0, 50.0, -129.0, 72.0)),
+    Region("hi", "Hawaii", "EPSG:32604", (-162.0, 18.0, -154.0, 23.0)),
+    Region(
+        "pr_vi",
+        "Puerto Rico and U.S. Virgin Islands",
+        "EPSG:32161",
+        (-68.0, 17.0, -64.0, 19.0),
+    ),
+    Region("samoa", "American Samoa", "EPSG:32702", (-173.0, -15.0, -168.0, -13.0)),
+    Region(
+        "guam_cnmi",
+        "Guam and Northern Mariana Islands",
+        "EPSG:32655",
+        (144.0, 13.0, 146.5, 21.0),
+    ),
 )
 
 
@@ -56,13 +59,11 @@ REGIONS: tuple[Region, ...] = (
 DEFAULTS: dict[str, str] = {
     # U.S. nation cartographic boundary (5M = 1:5,000,000 generalized)
     "nation_url": (
-        "https://www2.census.gov/geo/tiger/GENZ2023/shp/"
-        "cb_2023_us_nation_5m.zip"
+        "https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_nation_5m.zip"
     ),
     # 2020 Census Urban Areas (proxy for "congested area")
     "urban_url": (
-        "https://www2.census.gov/geo/tiger/TIGER2024/UAC20/"
-        "tl_2024_us_uac20.zip"
+        "https://www2.census.gov/geo/tiger/TIGER2024/UAC20/tl_2024_us_uac20.zip"
     ),
     # FAA NASR subscription landing page; we scrape for the latest cycle.
     "nasr_landing": (

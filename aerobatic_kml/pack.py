@@ -55,5 +55,6 @@ def build_foreflight_pack(
             json.dumps(manifest, indent=2) + "\n",
         )
         z.write(kml_path, f"{pack_root}/layers/{kml_path.name}")
-    LOG.info("pack written: %s (%.1f MB)",
-             out_zip, out_zip.stat().st_size / 1024 / 1024)
+    LOG.info(
+        "pack written: %s (%.1f MB)", out_zip, out_zip.stat().st_size / 1024 / 1024
+    )

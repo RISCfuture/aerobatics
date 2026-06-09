@@ -57,35 +57,43 @@ def load_airport_airspace(cache: Path, cycle_dir_url: str) -> gpd.GeoDataFrame:
 
     # Class code is usually in CLASS (one of 'B', 'C', 'D', 'E').
     cls_col = next(
-        (c for c in ("CLASS", "CLASS_CODE", "TYPE_CODE", "LOCAL_TYPE")
-         if c in gdf.columns),
+        (
+            c
+            for c in ("CLASS", "CLASS_CODE", "TYPE_CODE", "LOCAL_TYPE")
+            if c in gdf.columns
+        ),
         None,
     )
     if cls_col is None:
-        raise RuntimeError(
-            f"no class-code column in {list(gdf.columns)[:30]}..."
-        )
+        raise RuntimeError(f"no class-code column in {list(gdf.columns)[:30]}...")
     gdf["_CLASS"] = gdf[cls_col].astype(str).str.strip().str.upper()
 
     # LOWER_CODE == 'SFC' means the feature reaches the surface (the Hucker
     # gate). For Class E we additionally require LOCAL_TYPE == 'CLASS_E2'.
-    sfc = gdf.get("LOWER_CODE", pd.Series([""] * len(gdf))) \
-        .astype(str).str.upper().eq("SFC")
-    local_type = gdf.get("LOCAL_TYPE", pd.Series([""] * len(gdf))) \
-        .astype(str).str.upper()
+    sfc = (
+        gdf.get("LOWER_CODE", pd.Series([""] * len(gdf)))
+        .astype(str)
+        .str.upper()
+        .eq("SFC")
+    )
+    local_type = (
+        gdf.get("LOCAL_TYPE", pd.Series([""] * len(gdf))).astype(str).str.upper()
+    )
 
     is_bcd = gdf["_CLASS"].isin({"B", "C", "D"}) & sfc
     is_e2 = (gdf["_CLASS"] == "E") & sfc & (local_type == "CLASS_E2")
     keep = is_bcd | is_e2
 
     by_class = {
-        "B":  int((keep & (gdf["_CLASS"] == "B")).sum()),
-        "C":  int((keep & (gdf["_CLASS"] == "C")).sum()),
-        "D":  int((keep & (gdf["_CLASS"] == "D")).sum()),
+        "B": int((keep & (gdf["_CLASS"] == "B")).sum()),
+        "C": int((keep & (gdf["_CLASS"] == "C")).sum()),
+        "D": int((keep & (gdf["_CLASS"] == "D")).sum()),
         "E2": int(is_e2.sum()),
     }
     LOG.info(
         "class airspace: %d total, keeping %d (per Hucker 2006): %s",
-        len(gdf), int(keep.sum()), by_class,
+        len(gdf),
+        int(keep.sum()),
+        by_class,
     )
     return gdf.loc[keep].reset_index(drop=True)

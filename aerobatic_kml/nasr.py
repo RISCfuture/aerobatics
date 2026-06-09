@@ -6,8 +6,8 @@ import datetime as _dt
 import logging
 import re
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 
@@ -27,9 +27,7 @@ def discover_nasr_cycle(landing_url: str) -> tuple[str, str]:
     r = http.get(landing_url)
     r.raise_for_status()
     # e.g. "./../NASR_Subscription/2026-04-16"
-    dates = sorted(set(re.findall(
-        r'NASR_Subscription/(\d{4}-\d{2}-\d{2})', r.text
-    )))
+    dates = sorted(set(re.findall(r"NASR_Subscription/(\d{4}-\d{2}-\d{2})", r.text)))
     if not dates:
         raise RuntimeError(f"no cycle dates found at {landing_url}")
     # Pick the newest date whose detail page actually lists downloads.
@@ -53,10 +51,7 @@ def csv_group_url(cycle_date: str, group: str) -> str:
     """
     d = _dt.datetime.strptime(cycle_date, "%Y-%m-%d")
     tag = d.strftime("%d_%b_%Y")
-    return (
-        f"https://nfdc.faa.gov/webContent/28DaySub/extra/"
-        f"{tag}_{group}_CSV.zip"
-    )
+    return f"https://nfdc.faa.gov/webContent/28DaySub/extra/{tag}_{group}_CSV.zip"
 
 
 def read_csv_from_zip(zip_path: Path, name_patterns: Iterable[str]) -> pd.DataFrame:
@@ -64,7 +59,8 @@ def read_csv_from_zip(zip_path: Path, name_patterns: Iterable[str]) -> pd.DataFr
     with zipfile.ZipFile(zip_path) as zf:
         names = zf.namelist()
         candidates = [
-            n for n in names
+            n
+            for n in names
             if any(p.upper() in n.upper() for p in name_patterns)
             and n.lower().endswith(".csv")
         ]

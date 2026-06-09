@@ -82,8 +82,10 @@ def load_federal_airways(
     by_desig = seg["AWY_DESIGNATION"].value_counts().to_dict()
     LOG.info(
         "airway segments: %d -> %d after excluding designations %s; kept: %s",
-        before, len(seg),
-        sorted(EXCLUDED_AIRWAY_DESIGNATIONS), by_desig,
+        before,
+        len(seg),
+        sorted(EXCLUDED_AIRWAY_DESIGNATIONS),
+        by_desig,
     )
 
     def _coord_dict(df: pd.DataFrame, id_col: str) -> dict:
@@ -91,21 +93,31 @@ def load_federal_airways(
         sub["LAT_DECIMAL"] = pd.to_numeric(sub["LAT_DECIMAL"], errors="coerce")
         sub["LONG_DECIMAL"] = pd.to_numeric(sub["LONG_DECIMAL"], errors="coerce")
         sub = sub.dropna()
-        return dict(zip(sub[id_col], zip(sub["LONG_DECIMAL"], sub["LAT_DECIMAL"])))
+        return dict(
+            zip(
+                sub[id_col],
+                zip(sub["LONG_DECIMAL"], sub["LAT_DECIMAL"], strict=True),
+                strict=True,
+            )
+        )
 
     fix_map = _coord_dict(fix, "FIX_ID")
     nav_map = _coord_dict(nav, "NAV_ID")
     # Fixes take precedence over navaids for name collisions.
     coord_map = {**nav_map, **fix_map}
-    LOG.info("fix coords: %d, nav coords: %d, merged: %d",
-             len(fix_map), len(nav_map), len(coord_map))
+    LOG.info(
+        "fix coords: %d, nav coords: %d, merged: %d",
+        len(fix_map),
+        len(nav_map),
+        len(coord_map),
+    )
 
     from_col = "FROM_POINT" if "FROM_POINT" in seg.columns else "FROM_POINT_ID"
     to_col = "TO_POINT" if "TO_POINT" in seg.columns else "TO_POINT_ID"
 
     lines: list[LineString] = []
     missing = 0
-    for frm, to in zip(seg[from_col], seg[to_col]):
+    for frm, to in zip(seg[from_col], seg[to_col], strict=True):
         a = coord_map.get(frm)
         b = coord_map.get(to)
         if a and b:
@@ -113,11 +125,10 @@ def load_federal_airways(
         else:
             missing += 1
 
-    LOG.info("built %d airway legs (%d skipped: unresolved endpoints)",
-             len(lines), missing)
+    LOG.info(
+        "built %d airway legs (%d skipped: unresolved endpoints)", len(lines), missing
+    )
     if not lines:
-        raise RuntimeError(
-            "could not assemble any airway centerlines from NASR."
-        )
+        raise RuntimeError("could not assemble any airway centerlines from NASR.")
 
     return gpd.GeoDataFrame(geometry=lines, crs=WGS84)

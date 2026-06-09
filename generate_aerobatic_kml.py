@@ -8,6 +8,7 @@ continue to call a single file by name. Equivalent:
 
     python -m aerobatic_kml [flags]
 """
+
 import sys
 
 from aerobatic_kml.cli import main

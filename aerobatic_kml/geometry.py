@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import geopandas as gpd
 from shapely import make_valid
@@ -11,7 +11,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry import box as _box
 from shapely.ops import unary_union
 
-from .config import AIRWAY_BUFFER_M, REGIONS, Region, WGS84
+from .config import AIRWAY_BUFFER_M, REGIONS, WGS84, Region
 
 LOG = logging.getLogger(__name__)
 
@@ -26,8 +26,7 @@ def iter_polygons(geom) -> Iterable[Polygon]:
     if isinstance(geom, Polygon):
         yield geom
     elif isinstance(geom, MultiPolygon):
-        for p in geom.geoms:
-            yield p
+        yield from geom.geoms
     elif hasattr(geom, "geoms"):
         for g in geom.geoms:
             yield from iter_polygons(g)
@@ -47,8 +46,7 @@ def drop_small_parts(geom, min_area_m2: float):
     for p in parts:
         if p.area < min_area_m2:
             continue
-        holes = [h for h in p.interiors
-                 if Polygon(h).area >= min_area_m2]
+        holes = [h for h in p.interiors if Polygon(h).area >= min_area_m2]
         if holes or p.interiors:
             p = Polygon(p.exterior.coords, [h.coords for h in holes])
         kept.append(p)
@@ -71,8 +69,7 @@ def clip_to_bbox(gdf: gpd.GeoDataFrame, bbox) -> gpd.GeoDataFrame:
 
     def keep(g):
         xmin, ymin, xmax, ymax = g.bounds
-        return (xmin >= lon_lo and xmax <= lon_hi
-                and ymin >= lat_lo and ymax <= lat_hi)
+        return xmin >= lon_lo and xmax <= lon_hi and ymin >= lat_lo and ymax <= lat_hi
 
     return gdf[gdf.geometry.apply(keep)]
 
@@ -116,8 +113,14 @@ def compute_region(
         LOG.info("%s: no input features in clip bbox - skipping", region.key)
         return None
 
-    LOG.info("%s: features clipped (us=%d urban=%d airspace=%d airways=%d)",
-             region.key, len(us_r), len(urban_r), len(airspace_r), len(legs_r))
+    LOG.info(
+        "%s: features clipped (us=%d urban=%d airspace=%d airways=%d)",
+        region.key,
+        len(us_r),
+        len(urban_r),
+        len(airspace_r),
+        len(legs_r),
+    )
 
     def _union_proj(gdf):
         if gdf.empty:
@@ -146,10 +149,12 @@ def compute_region(
     if simplify_m > 0:
         if prohibited_m is not None:
             prohibited_m = make_valid(
-                prohibited_m.simplify(simplify_m, preserve_topology=True))
+                prohibited_m.simplify(simplify_m, preserve_topology=True)
+            )
         if permitted_m is not None:
             permitted_m = make_valid(
-                permitted_m.simplify(simplify_m, preserve_topology=True))
+                permitted_m.simplify(simplify_m, preserve_topology=True)
+            )
 
     if min_feature_area_m2 > 0:
         if prohibited_m is not None:
@@ -183,7 +188,11 @@ def compute_prohibited_and_permitted(
     for r in regions:
         LOG.info("--- region: %s (%s) ---", r.key, r.name)
         result = compute_region(
-            r, us, urban, airspace, airways,
+            r,
+            us,
+            urban,
+            airspace,
+            airways,
             simplify_m=tol_m,
             min_feature_area_m2=min_feature_area_m2,
         )
@@ -197,16 +206,19 @@ def compute_prohibited_and_permitted(
 
     prohibited = (
         make_valid(unary_union([make_valid(g) for g in prohibited_parts]))
-        if prohibited_parts else Polygon()
+        if prohibited_parts
+        else Polygon()
     )
     permitted = (
         make_valid(unary_union([make_valid(g) for g in permitted_parts]))
-        if permitted_parts else Polygon()
+        if permitted_parts
+        else Polygon()
     )
 
     n_prohibited = sum(1 for _ in iter_polygons(prohibited))
     n_permitted = sum(1 for _ in iter_polygons(permitted))
-    LOG.info("merged: prohibited polys=%d, permitted polys=%d",
-             n_prohibited, n_permitted)
+    LOG.info(
+        "merged: prohibited polys=%d, permitted polys=%d", n_prohibited, n_permitted
+    )
 
     return prohibited, permitted

@@ -47,6 +47,8 @@ def make_session() -> requests.Session:
 SESSION = make_session()
 
 
-def get(url: str, *, stream: bool = False, timeout=DEFAULT_TIMEOUT) -> requests.Response:
+def get(
+    url: str, *, stream: bool = False, timeout=DEFAULT_TIMEOUT
+) -> requests.Response:
     """GET url through the retrying shared session."""
     return SESSION.get(url, stream=stream, timeout=timeout)

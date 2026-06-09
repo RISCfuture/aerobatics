@@ -65,7 +65,7 @@ conducting aerobatic flight.
 
 ## Build locally
 
-```
+```sh
 pyenv virtualenv 3.14.5 aerobatics
 pyenv activate aerobatics
 pip install -r requirements.txt
@@ -78,7 +78,7 @@ Output: `91.303 Aerobatic Areas.zip` in the working directory. Downloads
 Useful flags:
 
 | flag | effect |
-|---|---|
+| --- | --- |
 | `--kml-only` | write just the styled KML, skip the pack wrapper |
 | `--show permitted` | render the permitted layer instead of prohibited |
 | `--regions conus,hi` | only process the listed regions |
@@ -91,7 +91,7 @@ Useful flags:
 The code is split into small, focused modules under `aerobatic_kml/`:
 
 | module | concern |
-|---|---|
+| --- | --- |
 | `config` | CRS/region table, URL defaults, pack metadata |
 | `download` | HTTP + on-disk caching, zipped-shapefile reader |
 | `nasr` | FAA NASR cycle discovery, CSV extraction |

@@ -1,4 +1,5 @@
 """Entry point for ``python -m aerobatic_kml``."""
+
 import sys
 
 from .cli import main

@@ -131,14 +131,19 @@ def main(argv: list[str]) -> int:
         wanted = {k.strip() for k in args.regions.split(",") if k.strip()}
         unknown = wanted - {r.key for r in REGIONS}
         if unknown:
-            ap.error(f"unknown region(s): {sorted(unknown)}. "
-                     f"Available: {[r.key for r in REGIONS]}")
+            ap.error(
+                f"unknown region(s): {sorted(unknown)}. "
+                f"Available: {[r.key for r in REGIONS]}"
+            )
         selected = tuple(r for r in REGIONS if r.key in wanted)
     else:
         selected = REGIONS
 
     prohibited, permitted = compute_prohibited_and_permitted(
-        us, urban, airspace, airways,
+        us,
+        urban,
+        airspace,
+        airways,
         simplify_deg=args.simplify,
         min_feature_area_m2=args.min_area_km2 * 1e6,
         regions=selected,
@@ -159,7 +164,8 @@ def main(argv: list[str]) -> int:
     if args.kml_only:
         kml_path = args.out
         write_kml(
-            geom, kml_path,
+            geom,
+            kml_path,
             document_name=doc_name,
             folder_name=folder,
             fill_abgr=fill,
@@ -173,7 +179,8 @@ def main(argv: list[str]) -> int:
     with tempfile.TemporaryDirectory() as td:
         kml_tmp = Path(td) / KML_FILENAME
         write_kml(
-            geom, kml_tmp,
+            geom,
+            kml_tmp,
             document_name=doc_name,
             folder_name=folder,
             fill_abgr=fill,
@@ -181,7 +188,8 @@ def main(argv: list[str]) -> int:
             line_width=PROHIBITED_LINE_WIDTH,
         )
         build_foreflight_pack(
-            args.out, kml_tmp,
+            args.out,
+            kml_tmp,
             cycle_date=cycle_date,
             pack_name=PACK_NAME,
             pack_abbrev=PACK_ABBREV,
