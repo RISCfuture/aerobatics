@@ -1,12 +1,21 @@
 """Federal-airway loader for 91.303(d), filtered by Part-71 designation.
 
-14 CFR Part 71 designates Victor airways (V-) and colored Federal airways
-(Blue / Green / Red / Puerto Rico) as "Federal airways." Q- and T-routes
-are published in FAA Order 7400.11 as "RNAV routes," not airways, and do
-not carry the 91.303(d) 4-NM buffer. North Atlantic (AT) and Pacific (PA)
-oceanic routes are not U.S. domestic Federal airways either. J-routes are
-Federal airways but only above FL180, which is outside the practical
-range of Part-91 aerobatic flight, so we exclude them too.
+14 CFR 71.1 incorporates FAA Order JO 7400.11 by reference (under 5 U.S.C.
+552(a) and 1 CFR part 51), making it regulatory. Its 6008 designates only
+6009 (colored airways) and 6010 (VOR airways) as "Federal Airways"; 6011
+(T-routes) is designated as "Area Navigation Routes." So Victor (V-) and
+colored Federal airways (Blue / Green / Red / Puerto Rico) carry the
+91.303(d) 4-NM buffer, while Q- and T-routes (RNAV) do not.
+
+This split took effect with the 2023 order (7400.11H, effective 2023-09-15):
+the prior 6008 designated 6009-6011 as Federal Airways, so T-routes counted
+then. The generator always pulls the current NASR cycle, so it is always in
+the post-change regime; do not re-include T-routes for current data.
+
+North Atlantic (AT) and Pacific (PA) oceanic routes are not U.S. domestic
+Federal airways either. J-routes are Federal airways but only above FL180,
+which is outside the practical range of Part-91 aerobatic flight, so we
+exclude them too.
 """
 
 from __future__ import annotations

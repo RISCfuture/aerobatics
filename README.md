@@ -43,10 +43,12 @@ Translucent blue polygons cover every area where **at least one** of
   other 91.303 sub-paragraphs).
 - **91.303(d)** Within 4 NM of the centerline of any Federal airway.
   Filtered to U.S. domestic Victor (V) routes and colored Federal airways
-  (BF / G / R / PR). Q- and T-routes (published as RNAV routes in FAA
-  Order 7400.11, not as airways under 14 CFR Part 71) are excluded, as are
-  North Atlantic (AT) and Pacific (PA) oceanic routes and J-routes (high
-  altitude, beyond the practical reach of Part-91 aerobatic flight).
+  (BF / G / R / PR). Q- and T-routes are excluded: FAA Order JO 7400.11
+  (incorporated into 14 CFR 71.1) designates them as Area Navigation
+  Routes, not Federal Airways, as of the 2023 order (7400.11H). Also
+  excluded are North Atlantic (AT) and Pacific (PA) oceanic routes and
+  J-routes (high altitude, beyond the practical reach of Part-91 aerobatic
+  flight).
 
 **Not** represented:
 
