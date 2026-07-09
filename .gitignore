@@ -20,3 +20,4 @@ data_cache/
 # Generated artifacts
 91.303 Aerobatic Areas.zip
 *.kml
+.claude/settings.local.json
