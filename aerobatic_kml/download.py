@@ -30,8 +30,7 @@ def download(url: str, cache_dir: Path) -> Path:
         r.raise_for_status()
         tmp = out.with_suffix(out.suffix + ".part")
         with open(tmp, "wb") as f:
-            for chunk in r.iter_content(1 << 20):
-                f.write(chunk)
+            f.writelines(r.iter_content(1 << 20))
         tmp.rename(out)
     return out
 
